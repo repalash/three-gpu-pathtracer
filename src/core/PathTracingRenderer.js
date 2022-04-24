@@ -76,11 +76,11 @@ export class PathTracingRenderer {
 
 	}
 
-	constructor( renderer ) {
+	constructor( renderer, target = undefined ) {
 
 		this.camera = null;
 		this.tiles = new Vector2( 1, 1 );
-		this.target = new WebGLRenderTarget( 1, 1, {
+		this.target = target || new WebGLRenderTarget( 1, 1, {
 			format: RGBAFormat,
 			type: FloatType,
 		} );
