@@ -188,4 +188,13 @@ export const shaderUtils = /* glsl */`
 		}
 
 	}
+
+	vec2 cartesianToPolar(vec3 n) {
+		vec2 uv;
+		uv.x = atan(n.z, n.x) / (PI * 2.) + 0.5;
+		uv.y = asin(n.y) / PI + 0.5;
+		return uv;
+	}
+
+
 `;

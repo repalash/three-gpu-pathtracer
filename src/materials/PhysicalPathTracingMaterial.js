@@ -1,4 +1,4 @@
-import { Matrix4, Matrix3, Color } from 'three';
+import { Matrix4, Matrix3, Color, EquirectangularReflectionMapping, CubeUVReflectionMapping } from 'three';
 import { MaterialBase } from './MaterialBase.js';
 import {
 	MeshBVHUniformStruct, FloatVertexAttributeTexture, UIntVertexAttributeTexture,
@@ -20,6 +20,15 @@ export class PhysicalPathTracingMaterial extends MaterialBase {
 
 	}
 
+	onBeforeRender() {
+
+		this.setDefine( 'ENV_MAP_TYPE',
+			this.environmentMap.mapping === CubeUVReflectionMapping ? '2' :
+				this.environmentMap.mapping === EquirectangularReflectionMapping ? '1' : '0' );
+		super.onBeforeRender();
+
+	}
+
 	constructor( parameters ) {
 
 		super( {
@@ -28,6 +37,7 @@ export class PhysicalPathTracingMaterial extends MaterialBase {
 			depthWrite: false,
 
 			defines: {
+				ENV_MAP_TYPE: 1,
 				DOF_SUPPORT: 1,
 				TRANSPARENT_TRAVERSALS: 5,
 				MATERIAL_LENGTH: 0,
@@ -97,7 +107,11 @@ export class PhysicalPathTracingMaterial extends MaterialBase {
 				#ifdef USE_ENVMAP
 
 				uniform float environmentBlur;
+				#if ENV_MAP_TYPE == 0
+				uniform samplerCube environmentMap;
+				#else
 				uniform sampler2D environmentMap;
+				#endif
 				uniform mat3 environmentRotation;
 
 				#else
@@ -206,7 +220,14 @@ export class PhysicalPathTracingMaterial extends MaterialBase {
 
 							#ifdef USE_ENVMAP
 
+                            rayDirection = environmentRotation * normalize( rayDirection );
+							#if ENV_MAP_TYPE == 0
+							vec3 skyColor = textureCube(environmentMap, rayDirection).rgb;
+							#elif ENV_MAP_TYPE == 1
+							vec3 skyColor = texture2D(environmentMap, cartesianToPolar(rayDirection)).rgb;
+                            #else
                             vec3 skyColor = textureCubeUV( environmentMap, environmentRotation * rayDirection, environmentBlur ).rgb;
+							#endif
 
 							#else
 
